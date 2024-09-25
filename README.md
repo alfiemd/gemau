@@ -38,9 +38,9 @@ contributing. :)
 Given the current emptiness of this project, you should take a look at the
 following:
 
-- (CGSuite)[https://www.cgsuite.org/] if you need to get things done.
-- (cgt)[https://crates.io/crates/cgt] if you like your games played rusty.
-- (haskell-cgt)[https://github.com/kamekura/haskell-cgt] for the Haskellians.
+- [CGSuite](https://www.cgsuite.org/) if you need to get things done.
+- [cgt](https://crates.io/crates/cgt) if you like your games played rusty.
+- [haskell-cgt](https://github.com/kamekura/haskell-cgt) for the Haskellians.
 
 ## License
 
