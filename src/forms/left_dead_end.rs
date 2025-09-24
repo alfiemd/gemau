@@ -1,8 +1,10 @@
-use itertools::FoldWhile::{Continue, Done};
-use itertools::Itertools;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Add;
+
+use itertools::FoldWhile::Continue;
+use itertools::FoldWhile::Done;
+use itertools::Itertools;
 
 /// Represents a Left dead end; it is identified with its set of options.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -43,10 +45,13 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::with_options(0..2);
     ///
-    /// assert_eq!(g.options(), vec![LeftDeadEnd::ZERO, LeftDeadEnd::integer(1)]);
+    /// assert_eq!(
+    ///     g.options(),
+    ///     vec![LeftDeadEnd::ZERO, LeftDeadEnd::integer(1)]
+    /// );
     /// ```
     pub fn with_options(options: impl IntoIterator<Item = impl Into<LeftDeadEnd>>) -> Self {
         Self {
@@ -59,13 +64,13 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::ZERO;
     /// assert!(g.options().is_empty());
     /// ```
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::integer(4);
     /// let h = LeftDeadEnd::integer(3);
     /// assert_eq!(g.options(), vec!(h));
@@ -78,6 +83,20 @@ impl LeftDeadEnd {
     /// Returns an iterator over the options of the [`LeftDeadEnd`].
     pub fn options_iter(&self) -> std::slice::Iter<'_, LeftDeadEnd> {
         self.options.iter()
+    }
+
+    #[must_use]
+    pub fn n_truncate(&self, n: usize) -> Self {
+        if n == 0 {
+            return Self::ZERO;
+        }
+
+        Self {
+            options: self
+                .options_iter()
+                .map(|g_r| g_r.n_truncate(n - 1))
+                .collect(),
+        }
     }
 
     /// Return the novel factors of a [`LeftDeadEnd`].
@@ -148,17 +167,24 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::waiting(2) + 1;
     ///
     /// let factors = g.factors();
     ///
-    /// assert_eq!(factors, vec![LeftDeadEnd::integer(1), LeftDeadEnd::waiting(2),
-    /// LeftDeadEnd::waiting(2) + 1, LeftDeadEnd::ZERO]);
+    /// assert_eq!(
+    ///     factors,
+    ///     vec![
+    ///         LeftDeadEnd::integer(1),
+    ///         LeftDeadEnd::waiting(2),
+    ///         LeftDeadEnd::waiting(2) + 1,
+    ///         LeftDeadEnd::ZERO
+    ///     ]
+    /// );
     /// ```
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::integer(3);
     ///
     /// let factors = g.factors();
@@ -217,7 +243,7 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::ZERO;
     /// assert!(!g.is_atom());
     ///
@@ -234,14 +260,14 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::ZERO;
     /// let h = LeftDeadEnd::integer(0);
     /// assert_eq!(g, h);
     /// ```
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// // The same form as the canonical form of -1 in normal play.
     /// let g = LeftDeadEnd::integer(1);
     /// // The same form as the canonical form of -2 in normal play.
@@ -263,14 +289,14 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::waiting(1);
     /// let h = LeftDeadEnd::integer(1);
     /// assert_eq!(g, h);
     /// ```
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::ZERO;
     /// let h = LeftDeadEnd::integer(1);
     /// let k = LeftDeadEnd::waiting(2);
@@ -294,7 +320,7 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::integer(1);
     /// let h = LeftDeadEnd::waiting(2);
     /// let k = LeftDeadEnd::with_options(vec![g.clone(), h.clone()]);
@@ -353,7 +379,7 @@ impl LeftDeadEnd {
     /// # Examples
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::integer(3);
     /// let h = LeftDeadEnd::waiting(2);
     /// let k = (&g + &h).canonical();
@@ -371,7 +397,7 @@ impl LeftDeadEnd {
     /// ```
     ///
     /// ```
-    /// # use gemau::LeftDeadEnd;
+    /// # use gemau::forms::LeftDeadEnd;
     /// let g = LeftDeadEnd::integer(7);
     ///
     /// let (a, b, c) = g.is_integer();
@@ -536,7 +562,7 @@ impl fmt::Debug for LeftDeadEnd {
 /// # Example
 ///
 /// ```
-/// # use gemau::LeftDeadEnd;
+/// # use gemau::forms::LeftDeadEnd;
 /// # use std::hash::{Hash, DefaultHasher, Hasher};
 /// let g = LeftDeadEnd::waiting(2) + 1;
 /// let h = (LeftDeadEnd::waiting(2) + 1).canonical();
