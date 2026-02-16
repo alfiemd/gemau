@@ -17,8 +17,10 @@ impl Default for LeftDeadEnd {
     }
 }
 
-/// Convert a [`usize`] into what would be the canonical form of a (negative) integer in normal
-/// play; i.e. an integer Left dead end.
+/// Converts a non-negative rank into the corresponding integer [`LeftDeadEnd`].
+///
+/// In particular, this maps `n` to the Left dead end corresponding to the normal-play canonical
+/// form of `-n`.
 impl From<usize> for LeftDeadEnd {
     fn from(value: usize) -> Self {
         LeftDeadEnd::integer(value)
@@ -95,7 +97,7 @@ impl LeftDeadEnd {
     /// # use gemau::LeftDeadEnd;
     /// let g = LeftDeadEnd::integer(4);
     /// let h = LeftDeadEnd::integer(3);
-    /// assert_eq!(g.options(), vec!(h));
+    /// assert_eq!(g.options(), vec![h]);
     /// ```
     #[must_use]
     pub fn options(&self) -> &[Self] {
@@ -122,7 +124,7 @@ impl LeftDeadEnd {
                 .all(|h| self.options.iter().any(|g| g.isomorphic(h)))
     }
 
-    /// Return the novel factors of a [`LeftDeadEnd`].
+    /// Returns the novel factors of a [`LeftDeadEnd`].
     ///
     /// If a sum `g = h + k` is *novel*, then, without loss of generality, `h` appears in every
     /// factorisation of `g`. But `k`, the counterpart to `h`, is not necessarily in the
@@ -182,8 +184,8 @@ impl LeftDeadEnd {
         new_factors
     }
 
-    /// Return the factors of the [`LeftDeadEnd`]. They will *not* be in canonical form when
-    /// returned.
+    /// Returns the factors of the [`LeftDeadEnd`]. They are *not* guaranteed to be in canonical
+    /// form when returned.
     ///
     /// # Examples
     ///
@@ -298,7 +300,8 @@ impl LeftDeadEnd {
         }
     }
 
-    /// Returns the waiting game of given rank. Sometimes also called the perfect murder.
+    /// Returns the *waiting game* of the given rank. This has also been called the *perfect
+    /// murder*.
     ///
     /// # Examples
     ///
@@ -354,9 +357,9 @@ impl LeftDeadEnd {
         LeftDeadEnd::from_options_unchecked(options)
     }
 
-    /// Returns whether or not the [`LeftDeadEnd`] is a **canonical form** waiting game in the form
-    /// of a tuple `(a, b)`, where `a` respresents the rank of the waiting game (if it is one), and
-    /// `b` represents whether or not it is a waiting game.
+    /// Returns `(rank, is_waiting)` for canonical-form recognition of waiting games.
+    ///
+    /// If `is_waiting` is `true`, then `rank` is the rank of the waiting game.
     #[must_use]
     pub fn is_waiting(&self) -> (usize, bool) {
         let (a, _, c) = self.is_integer();
@@ -388,7 +391,7 @@ impl LeftDeadEnd {
     /// [`LeftDeadEnd`], `b` is the counterpart to the integer in the factorisation of the game,
     /// and `c` represents whether the game is an integer.
     ///
-    /// This function expects the [`LeftDeadEnd`] to be in **canonical form**!
+    /// This function expects the [`LeftDeadEnd`] to be in **canonical form**.
     ///
     /// # Examples
     ///
@@ -455,8 +458,9 @@ impl LeftDeadEnd {
         None
     }
 
-    /// Bounds the length of factorisations of the [`LeftDeadEnd`]. This bound is *not* always
-    /// optimal.
+    /// Returns an upper bound on the length of factorisations of the [`LeftDeadEnd`].
+    ///
+    /// This uses several heuristics and is *not* always optimal.
     #[must_use]
     pub fn bound_length(&self) -> usize {
         if self.options.is_empty() {
@@ -548,9 +552,10 @@ impl LeftDeadEnd {
             + 1
     }
 
-    /// Returns the set of terminal lengths of the [`LeftDeadEnd`] as a vector; there are no
-    /// repeated entries. Note that `min(self.term_lengths()) == self.race()` and
-    /// `max(self.term_lengths()) == self.birth()`.
+    /// Returns the unique terminal lengths of the [`LeftDeadEnd`] as a vector.
+    ///
+    /// Values are deduplicated but not sorted. Note that `min(self.term_lengths()) == self.race()`
+    /// and `max(self.term_lengths()) == self.birth()`.
     #[must_use]
     pub fn term_lengths(&self) -> Vec<usize> {
         if self.options.is_empty() {
@@ -571,7 +576,7 @@ impl LeftDeadEnd {
     }
 }
 
-/// Will format canonical form integers and waiting games.
+/// Formats integers and canonical waiting games specially.
 impl fmt::Display for LeftDeadEnd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (a, b, c) = self.is_integer();
@@ -592,7 +597,7 @@ impl fmt::Display for LeftDeadEnd {
     }
 }
 
-/// Will only format canonical form integers.
+/// Formats integers specially.
 impl fmt::Debug for LeftDeadEnd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (a, b, c) = self.is_integer();
@@ -609,6 +614,8 @@ impl fmt::Debug for LeftDeadEnd {
 }
 
 /// The hash is **not** well-defined up to equivalence.
+///
+/// This hash should not be used where semantic equality is required.
 ///
 /// # Example
 ///
