@@ -80,6 +80,21 @@ impl LeftDeadEnd {
         self.options.iter()
     }
 
+    /// Returns whether or not two [`LeftDeadEnd`] values are isomorphic.
+    ///
+    /// Two games are isomorphic when every option of each game is isomorphic to at least one
+    /// option of the other game.
+    #[must_use]
+    pub fn isomorphic(&self, other: &Self) -> bool {
+        self.options
+            .iter()
+            .all(|g| other.options.iter().any(|h| g.isomorphic(h)))
+            && other
+                .options
+                .iter()
+                .all(|h| self.options.iter().any(|g| g.isomorphic(h)))
+    }
+
     /// Return the novel factors of a [`LeftDeadEnd`].
     ///
     /// If a sum `g = h + k` is *novel*, then, without loss of generality, `h` appears in every
