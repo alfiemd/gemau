@@ -421,7 +421,7 @@ impl LeftDeadEnd {
         .iter()
         .fold_while(usize::MAX, |min, &x| {
             if x == 1 {
-                Done(min)
+                Done(1)
             } else {
                 Continue(min.min(x))
             }
@@ -671,5 +671,11 @@ mod tests {
             (LeftDeadEnd::waiting(2) + LeftDeadEnd::waiting(3)).flex(),
             4
         );
+    }
+
+    #[test]
+    fn bound_length() {
+        let g = LeftDeadEnd::with_options(0..2);
+        assert_eq!(g.bound_length(), 1);
     }
 }
