@@ -344,12 +344,14 @@ impl LeftDeadEnd {
     #[must_use]
     pub fn canonical(&self) -> Self {
         // NOTE: options are pairwise non-equivalent, so cannot be isomorphic
-        LeftDeadEnd::from_options_unchecked(self.options.iter().fold(Vec::new(), |mut acc, x| {
-            if !self.options.iter().any(|y| y < x) && !acc.contains(x) {
-                acc.push(x.canonical());
+        let mut options = Vec::new();
+        for x in &self.options {
+            if !self.options.iter().any(|y| y < x) && !options.contains(x) {
+                options.push(x.canonical());
             }
-            acc
-        }))
+        }
+
+        LeftDeadEnd::from_options_unchecked(options)
     }
 
     /// Returns whether or not the [`LeftDeadEnd`] is a **canonical form** waiting game in the form
@@ -505,7 +507,12 @@ impl LeftDeadEnd {
             return 0;
         }
 
-        self.options.iter().fold(0, |max, x| max.max(x.flex())) + 1
+        self.options
+            .iter()
+            .map(LeftDeadEnd::flex)
+            .max()
+            .expect("flex called with non-empty options")
+            + 1
     }
 
     /// Returns the birthday of the [`LeftDeadEnd`]. Note that this is equivalent to its formal
@@ -517,7 +524,12 @@ impl LeftDeadEnd {
             return 0;
         }
 
-        self.options.iter().fold(0, |max, x| max.max(x.birth())) + 1
+        self.options
+            .iter()
+            .map(LeftDeadEnd::birth)
+            .max()
+            .expect("birth called with non-empty options")
+            + 1
     }
 
     /// Returns the race of the [`LeftDeadEnd`]. Note that this is equivalent to
@@ -530,7 +542,9 @@ impl LeftDeadEnd {
 
         self.options
             .iter()
-            .fold(usize::MAX, |min, x| min.min(x.race()))
+            .map(LeftDeadEnd::race)
+            .min()
+            .expect("race called with non-empty options")
             + 1
     }
 
@@ -543,15 +557,17 @@ impl LeftDeadEnd {
             return vec![0];
         }
 
-        self.options
-            .iter()
-            .flat_map(|x| x.term_lengths().into_iter().map(|num| num + 1))
-            .fold(vec![], |mut acc, x| {
-                if !acc.contains(&x) {
-                    acc.push(x);
+        let mut lengths = Vec::new();
+        for option in &self.options {
+            for length in option.term_lengths() {
+                let next = length + 1;
+                if !lengths.contains(&next) {
+                    lengths.push(next);
                 }
-                acc
-            })
+            }
+        }
+
+        lengths
     }
 }
 
