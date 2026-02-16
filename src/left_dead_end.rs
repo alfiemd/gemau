@@ -1,4 +1,3 @@
-use itertools::FoldWhile::{Continue, Done};
 use itertools::Itertools;
 use std::cmp::Ordering;
 use std::fmt;
@@ -436,15 +435,18 @@ impl LeftDeadEnd {
         (a + 1, b, c)
     }
 
-    fn unique_good_option(&self) -> Option<&LeftDeadEnd> {
-        let good_options: Vec<&LeftDeadEnd> = self
-            .options
+    fn good_options(&self) -> Vec<&LeftDeadEnd> {
+        self.options
             .iter()
-            .filter(|&g| self.options.iter().all(|h| h >= g))
-            .collect();
+            .filter(|&h| !self.options.iter().any(|k| h > k))
+            .collect()
+    }
 
+    fn unique_good_option(&self) -> Option<&LeftDeadEnd> {
+        let good_options = self.good_options();
         let first = *good_options.first()?;
-        if good_options.iter().all(|&g| g == first) {
+
+        if good_options.iter().skip(1).all(|g| *g == first) {
             return Some(first);
         }
 
@@ -463,24 +465,37 @@ impl LeftDeadEnd {
             return 1 + good_option.bound_length();
         }
 
-        [
-            self.race(),
-            self.options
-                .iter()
-                .fold(usize::MAX, |min, x| min.min(x.bound_length()))
-                + 1,
-            self.term_lengths().len() - 1,
-            self.flex().div_ceil(2),
-        ]
-        .iter()
-        .fold_while(usize::MAX, |min, &x| {
-            if x == 1 {
-                Done(1)
-            } else {
-                Continue(min.min(x))
+        let mut min_bound = self.race();
+        if min_bound == 1 {
+            return 1;
+        }
+
+        let flex_bound = self.flex().div_ceil(2);
+        if flex_bound == 1 {
+            return 1;
+        }
+        min_bound = min_bound.min(flex_bound);
+
+        let term_len_bound = self.term_lengths().len() - 1;
+        if term_len_bound == 1 {
+            return 1;
+        }
+        min_bound = min_bound.min(term_len_bound);
+
+        let mut min_option_bound = usize::MAX;
+        for option in self.good_options() {
+            let bound = option.bound_length();
+            // Implementation detail: in this branch, `race() > 1`, so no option can
+            // have bound 0. Therefore if any option has bound 1, the recursive bound
+            // is exactly 2.
+            if bound == 1 {
+                return 2;
             }
-        })
-        .into_inner()
+            min_option_bound = min_option_bound.min(bound);
+        }
+        let option_bound = min_option_bound + 1;
+
+        min_bound.min(option_bound)
     }
 
     /// Returns the flexibility of the [`LeftDeadEnd`].
@@ -727,16 +742,8 @@ mod tests {
         let g = LeftDeadEnd::with_options_unchecked([1, 2, 3])
             + LeftDeadEnd::with_options_unchecked([1, 2, 3]);
         assert_eq!(
-            [
-                g.race(),
-                g.options
-                    .iter()
-                    .fold(usize::MAX, |min, x| min.min(x.bound_length()))
-                    + 1,
-                g.term_lengths().len() - 1,
-                g.flex().div_ceil(2),
-            ],
-            [4, 3, 4, 3]
+            [g.race(), g.flex().div_ceil(2), g.term_lengths().len() - 1,],
+            [4, 3, 4]
         );
     }
 
