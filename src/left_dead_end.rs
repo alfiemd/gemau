@@ -49,9 +49,37 @@ impl LeftDeadEnd {
     /// assert_eq!(g.options(), vec![LeftDeadEnd::ZERO, LeftDeadEnd::integer(1)]);
     /// ```
     pub fn with_options(options: impl IntoIterator<Item = impl Into<LeftDeadEnd>>) -> Self {
-        Self {
-            options: options.into_iter().map(Into::into).collect(),
+        Self::from_options(options.into_iter().map(Into::into).collect())
+    }
+
+    /// Creates a new [`LeftDeadEnd`] without checking for isomorphic duplicate options.
+    ///
+    /// This is faster than [`LeftDeadEnd::with_options`] but assumes the caller already knows that
+    /// there are no isomorphic duplicates.
+    pub fn with_options_unchecked(
+        options: impl IntoIterator<Item = impl Into<LeftDeadEnd>>,
+    ) -> Self {
+        Self::from_options_unchecked(options.into_iter().map(Into::into).collect())
+    }
+
+    fn from_options(options: Vec<LeftDeadEnd>) -> Self {
+        let mut deduped = Vec::with_capacity(options.len());
+
+        for option in options {
+            if !deduped
+                .iter()
+                .any(|existing: &LeftDeadEnd| existing.isomorphic(&option))
+            {
+                deduped.push(option);
+            }
         }
+
+        // NOTE: options are pairwise non-isomorphic by construction
+        Self::from_options_unchecked(deduped)
+    }
+
+    fn from_options_unchecked(options: Vec<LeftDeadEnd>) -> Self {
+        Self { options }
     }
 
     /// Returns a borrowed slice to the options of the [`LeftDeadEnd`].
@@ -140,9 +168,7 @@ impl LeftDeadEnd {
                 }
             }
 
-            let counter = LeftDeadEnd {
-                options: counterparts,
-            };
+            let counter = LeftDeadEnd::from_options(counterparts);
 
             if n + &counter == *self {
                 if !new_factors.contains(n) {
@@ -299,9 +325,8 @@ impl LeftDeadEnd {
         if rank == 1 {
             return Self::integer(1);
         }
-        LeftDeadEnd {
-            options: vec![Self::ZERO, Self::waiting(rank - 1)],
-        }
+        // NOTE: these two options cannot be isomorphic
+        LeftDeadEnd::from_options_unchecked(vec![Self::ZERO, Self::waiting(rank - 1)])
     }
 
     /// Returns the canonical (simplest) form of the [`LeftDeadEnd`].
@@ -319,14 +344,13 @@ impl LeftDeadEnd {
     /// ```
     #[must_use]
     pub fn canonical(&self) -> Self {
-        LeftDeadEnd {
-            options: self.options.iter().fold(Vec::new(), |mut acc, x| {
-                if !self.options.iter().any(|y| y < x) && !acc.contains(x) {
-                    acc.push(x.canonical());
-                }
-                acc
-            }),
-        }
+        // NOTE: options are pairwise non-equivalent, so cannot be isomorphic
+        LeftDeadEnd::from_options_unchecked(self.options.iter().fold(Vec::new(), |mut acc, x| {
+            if !self.options.iter().any(|y| y < x) && !acc.contains(x) {
+                acc.push(x.canonical());
+            }
+            acc
+        }))
     }
 
     /// Returns whether or not the [`LeftDeadEnd`] is a **canonical form** waiting game in the form
@@ -621,7 +645,7 @@ impl Add for &LeftDeadEnd {
             options.push(self.clone() + h.clone());
         }
 
-        LeftDeadEnd { options }
+        LeftDeadEnd::from_options(options)
     }
 }
 
@@ -650,7 +674,7 @@ where
             options.push(self.clone() + h);
         }
 
-        LeftDeadEnd { options }
+        LeftDeadEnd::from_options(options)
     }
 }
 
@@ -692,5 +716,33 @@ mod tests {
     fn bound_length() {
         let g = LeftDeadEnd::with_options(0..2);
         assert_eq!(g.bound_length(), 1);
+    }
+
+    #[test]
+    fn add_integers_isomorphic() {
+        let g = LeftDeadEnd::integer(1) + LeftDeadEnd::integer(2);
+
+        assert!(g.isomorphic(&LeftDeadEnd::integer(3)));
+        assert_eq!(g.options(), vec![LeftDeadEnd::integer(2)]);
+    }
+
+    #[test]
+    fn isomorphic_options() {
+        let g = LeftDeadEnd::with_options([
+            LeftDeadEnd::integer(1),
+            LeftDeadEnd::waiting(1),
+            LeftDeadEnd::integer(1),
+        ]);
+
+        assert_eq!(g.options(), vec![LeftDeadEnd::integer(1)]);
+    }
+
+    #[test]
+    fn unchecked_isomorphic_options() {
+        let g =
+            LeftDeadEnd::with_options_unchecked([LeftDeadEnd::integer(1), LeftDeadEnd::waiting(1)]);
+
+        assert_eq!(g.options().len(), 2);
+        assert!(g.options()[0].isomorphic(&g.options()[1]));
     }
 }
