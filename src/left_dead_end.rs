@@ -556,11 +556,7 @@ impl fmt::Display for LeftDeadEnd {
             return write!(f, "W_{a}");
         }
 
-        let mut rep = String::new();
-        for g in &self.options {
-            rep.push_str(&format!("{g},"));
-        }
-        rep = rep[..rep.len() - 1].to_string();
+        let rep = self.options.iter().map(|g| format!("{g}")).join(",");
         write!(f, "{{{rep}}}")
     }
 }
@@ -576,11 +572,7 @@ impl fmt::Debug for LeftDeadEnd {
             return write!(f, "{a}+{b:?}");
         }
 
-        let mut rep = String::new();
-        for g in &self.options {
-            rep.push_str(&format!("{g:?},"));
-        }
-        rep = rep[..rep.len() - 1].to_string();
+        let rep = self.options.iter().map(|g| format!("{g:?}")).join(",");
         write!(f, "{{{rep}}}")
     }
 }
