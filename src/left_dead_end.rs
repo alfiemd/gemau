@@ -436,6 +436,21 @@ impl LeftDeadEnd {
         (a + 1, b, c)
     }
 
+    fn unique_good_option(&self) -> Option<&LeftDeadEnd> {
+        let good_options: Vec<&LeftDeadEnd> = self
+            .options
+            .iter()
+            .filter(|&g| self.options.iter().all(|h| h >= g))
+            .collect();
+
+        let first = *good_options.first()?;
+        if good_options.iter().all(|&g| g == first) {
+            return Some(first);
+        }
+
+        None
+    }
+
     /// Bounds the length of factorisations of the [`LeftDeadEnd`]. This bound is *not* always
     /// optimal.
     #[must_use]
@@ -444,8 +459,8 @@ impl LeftDeadEnd {
             return 0;
         }
 
-        if self.options.len() == 1 {
-            return 1 + self.options[0].bound_length();
+        if let Some(good_option) = self.unique_good_option() {
+            return 1 + good_option.bound_length();
         }
 
         [
@@ -716,6 +731,21 @@ mod tests {
     fn bound_length() {
         let g = LeftDeadEnd::with_options(0..2);
         assert_eq!(g.bound_length(), 1);
+
+        let g = LeftDeadEnd::with_options_unchecked([1, 2, 3])
+            + LeftDeadEnd::with_options_unchecked([1, 2, 3]);
+        assert_eq!(
+            [
+                g.race(),
+                g.options
+                    .iter()
+                    .fold(usize::MAX, |min, x| min.min(x.bound_length()))
+                    + 1,
+                g.term_lengths().len() - 1,
+                (g.flex() + 1) / 2,
+            ],
+            [4, 3, 4, 3]
+        );
     }
 
     #[test]
