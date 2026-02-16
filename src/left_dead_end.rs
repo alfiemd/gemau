@@ -470,7 +470,7 @@ impl LeftDeadEnd {
                 .fold(usize::MAX, |min, x| min.min(x.bound_length()))
                 + 1,
             self.term_lengths().len() - 1,
-            (self.flex() + 1) / 2,
+            self.flex().div_ceil(2),
         ]
         .iter()
         .fold_while(usize::MAX, |min, &x| {
@@ -742,7 +742,7 @@ mod tests {
                     .fold(usize::MAX, |min, x| min.min(x.bound_length()))
                     + 1,
                 g.term_lengths().len() - 1,
-                (g.flex() + 1) / 2,
+                g.flex().div_ceil(2),
             ],
             [4, 3, 4, 3]
         );
