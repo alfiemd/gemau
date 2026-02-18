@@ -173,35 +173,44 @@ impl DeadEnd {
         Self::from_options_unchecked(vec![Self::ZERO, Self::waiting(rank - 1)])
     }
 
-    /// Returns `(rank, is_waiting)` for canonical-form recognition of waiting games.
-    ///
-    /// If `is_waiting` is `true`, then `rank` is the rank of the waiting game.
+    /// Returns the rank of any waiting game equivalent to `self`.
     #[must_use]
-    pub fn is_waiting(&self) -> (usize, bool) {
+    pub fn is_waiting(&self) -> Option<usize> {
         if let Some(a) = self.is_integer() {
             if a <= 1 {
-                return (a, true);
+                return Some(a);
+            }
+            return None;
+        }
+
+        let mut has_zero = false;
+        let mut waiting_option: Option<(&Self, usize)> = None;
+
+        for option in &self.options {
+            if option.options.is_empty() {
+                has_zero = true;
+                continue;
+            }
+
+            if !self.is_dominant_option(option) {
+                continue;
+            }
+
+            let Some(rank) = option.is_waiting() else {
+                return None;
+            };
+
+            match waiting_option {
+                None => waiting_option = Some((option, rank)),
+                Some((existing, _)) if option == existing => {}
+                Some(_) => return None,
             }
         }
 
-        if self.options.len() != 2 {
-            return (0, false);
+        match (has_zero, waiting_option) {
+            (true, Some((_, rank))) => Some(rank + 1),
+            _ => None,
         }
-
-        if self.options[0].options.is_empty() {
-            let (a, b) = self.options[1].is_waiting();
-            if b {
-                return (a + 1, b);
-            }
-        }
-        if self.options[1].options.is_empty() {
-            let (a, b) = self.options[0].is_waiting();
-            if b {
-                return (a + 1, b);
-            }
-        }
-
-        (0, false)
     }
 
     /// Returns largest integer divisor as `(rank, counterpart)`.
@@ -744,5 +753,26 @@ mod tests {
 
         assert!(g.isomorphic(&DeadEnd::integer(3)));
         assert_eq!(g.options(), vec![DeadEnd::integer(2)]);
+    }
+
+    #[test]
+    fn integer_is_not_waiting_game() {
+        assert_eq!(DeadEnd::integer(2).is_waiting(), None);
+    }
+
+    #[test]
+    fn is_waiting_with_equal_good_options() {
+        let g = DeadEnd::with_options_unchecked([
+            DeadEnd::ZERO,
+            DeadEnd::with_options(vec![DeadEnd::ZERO, DeadEnd::integer(1)]),
+            DeadEnd::waiting(3),
+        ]);
+        assert_eq!(g.is_waiting(), Some(4));
+    }
+
+    #[test]
+    fn waiting_game_needs_zero() {
+        let g = DeadEnd::with_options_unchecked([DeadEnd::waiting(2), DeadEnd::waiting(3)]);
+        assert_eq!(g.is_waiting(), None);
     }
 }

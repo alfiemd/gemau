@@ -112,7 +112,7 @@ macro_rules! impl_handed_wrapper {
 
             /// See [`DeadEnd::is_waiting`].
             #[must_use]
-            pub fn is_waiting(&self) -> (usize, bool) {
+            pub fn is_waiting(&self) -> Option<usize> {
                 self.0.is_waiting()
             }
 

@@ -31,8 +31,7 @@ impl fmt::Display for DeadEnd {
             }
         }
 
-        let (a, b) = self.is_waiting();
-        if b {
+        if let Some(a) = self.is_waiting() {
             return write!(f, "W{}", usize_to_subscript(a));
         }
 
