@@ -87,6 +87,12 @@ macro_rules! impl_handed_wrapper {
                 Self::slice_from_inner(self.0.options())
             }
 
+            /// See [`DeadEnd::is_zero`].
+            #[must_use]
+            pub fn is_zero(&self) -> bool {
+                self.0.is_zero()
+            }
+
             /// See [`DeadEnd::options_iter`].
             pub fn options_iter(&self) -> std::slice::Iter<'_, Self> {
                 self.options().iter()

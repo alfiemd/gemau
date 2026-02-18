@@ -23,7 +23,7 @@ fn usize_to_subscript(mut n: usize) -> String {
 impl fmt::Display for DeadEnd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some((a, b)) = self.integer_part() {
-            if b.options().is_empty() {
+            if b.is_zero() {
                 return write!(f, "{a}");
             }
             if a > 0 {

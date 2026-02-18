@@ -83,7 +83,7 @@ impl DeadEnd {
     /// ```
     /// # use gemau::DeadEnd;
     /// let g = DeadEnd::ZERO;
-    /// assert!(g.options().is_empty());
+    /// assert!(g.is_zero());
     /// ```
     ///
     /// ```
@@ -95,6 +95,20 @@ impl DeadEnd {
     #[must_use]
     pub fn options(&self) -> &[Self] {
         &self.options
+    }
+
+    /// Returns whether `self` is the zero game.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// assert!(DeadEnd::ZERO.is_zero());
+    /// assert!(!DeadEnd::integer(1).is_zero());
+    /// ```
+    #[must_use]
+    pub fn is_zero(&self) -> bool {
+        self.options.is_empty()
     }
 
     /// Returns an iterator over the options of the [`DeadEnd`].
@@ -187,7 +201,7 @@ impl DeadEnd {
         let mut waiting_option: Option<(&Self, usize)> = None;
 
         for option in &self.options {
-            if option.options.is_empty() {
+            if option.is_zero() {
                 has_zero = true;
                 continue;
             }
@@ -237,7 +251,7 @@ impl DeadEnd {
     /// ```
     #[must_use]
     pub fn integer_part(&self) -> Option<(usize, &Self)> {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return Some((0, self));
         }
 
@@ -263,7 +277,7 @@ impl DeadEnd {
     /// ```
     #[must_use]
     pub fn is_integer(&self) -> Option<usize> {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return Some(0);
         }
         if self.options.len() > 1 {
@@ -291,7 +305,7 @@ impl DeadEnd {
     /// Returns the birthday of the [`DeadEnd`].
     #[must_use]
     pub fn birth(&self) -> usize {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return 0;
         }
 
@@ -306,7 +320,7 @@ impl DeadEnd {
     /// Returns the race of the [`DeadEnd`].
     #[must_use]
     pub fn race(&self) -> usize {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return 0;
         }
 
@@ -324,7 +338,7 @@ impl DeadEnd {
     /// and `max(self.term_lengths()) == self.birth()`.
     #[must_use]
     pub fn term_lengths(&self) -> Vec<usize> {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return vec![0];
         }
 
@@ -348,7 +362,7 @@ impl DeadEnd {
     /// the options of `g`, and so it must be checked separately.
     #[must_use]
     pub fn novel_factors(&self) -> Vec<Self> {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return vec![];
         }
 
@@ -433,7 +447,7 @@ impl DeadEnd {
     /// ```
     #[must_use]
     pub fn factors(&self) -> Vec<Self> {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return vec![Self::ZERO];
         }
 
@@ -582,7 +596,7 @@ impl DeadEnd {
     /// This uses several heuristics and is *not* always optimal.
     #[must_use]
     pub fn bound_length(&self) -> usize {
-        if self.options.is_empty() {
+        if self.is_zero() {
             return 0;
         }
 
@@ -643,8 +657,8 @@ impl PartialOrd for DeadEnd {
     }
 
     fn ge(&self, other: &Self) -> bool {
-        if other.options().is_empty() {
-            return self.options().is_empty();
+        if other.is_zero() {
+            return self.is_zero();
         }
 
         other
@@ -658,10 +672,10 @@ impl Add for &DeadEnd {
     type Output = DeadEnd;
 
     fn add(self, other: Self) -> Self::Output {
-        if self.options().is_empty() {
+        if self.is_zero() {
             return other.clone();
         }
-        if other.options().is_empty() {
+        if other.is_zero() {
             return self.clone();
         }
 
