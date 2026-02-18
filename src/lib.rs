@@ -32,6 +32,6 @@
 //! assert_eq!(k.birth(), 10);
 //! ```
 
-mod left_dead_end;
+mod dead_end;
 
-pub use left_dead_end::*;
+pub use dead_end::*;

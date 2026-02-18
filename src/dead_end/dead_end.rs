@@ -1,10 +1,5 @@
-use chumsky::prelude::*;
-use itertools::Itertools;
-use ref_cast::RefCast;
 use std::cmp::Ordering;
-use std::fmt;
 use std::ops::Add;
-use std::str::FromStr;
 
 /// A dead end represented by its set of options.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -13,22 +8,6 @@ pub struct DeadEnd {
     /// The options of the [`DeadEnd`].
     options: Vec<DeadEnd>,
 }
-
-/// Left dead end wrapper.
-///
-/// The ordering is reversed compared to [`DeadEnd`] and [`RightDeadEnd`].
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[repr(transparent)]
-#[derive(Clone, Default, RefCast, Debug)]
-pub struct LeftDeadEnd(DeadEnd);
-
-/// Right dead end wrapper.
-///
-/// The ordering is reversed compared to [`LeftDeadEnd`], but the same as [`DeadEnd`].
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[repr(transparent)]
-#[derive(Clone, Default, RefCast, Debug)]
-pub struct RightDeadEnd(DeadEnd);
 
 impl Default for DeadEnd {
     fn default() -> Self {
@@ -601,441 +580,6 @@ impl DeadEnd {
     }
 }
 
-macro_rules! impl_handed_wrapper {
-    ($wrapper:ident) => {
-        impl $wrapper {
-            /// The zero game; see [`DeadEnd::ZERO`].
-            pub const ZERO: Self = Self(DeadEnd::ZERO);
-
-            /// See [`DeadEnd::new`].
-            #[must_use]
-            pub fn new() -> Self {
-                Self(DeadEnd::new())
-            }
-
-            fn slice_from_inner(values: &[DeadEnd]) -> &[Self] {
-                // SAFETY: `$wrapper` is `#[repr(transparent)]` over [`DeadEnd`], so slices have
-                // identical layout.
-                unsafe { std::slice::from_raw_parts(values.as_ptr().cast::<Self>(), values.len()) }
-            }
-
-            /// Borrows the wrapped [`DeadEnd`].
-            #[must_use]
-            pub fn as_inner(&self) -> &DeadEnd {
-                &self.0
-            }
-
-            /// Mutably borrows the wrapped [`DeadEnd`].
-            #[must_use]
-            pub fn as_inner_mut(&mut self) -> &mut DeadEnd {
-                &mut self.0
-            }
-
-            /// Extracts the wrapped [`DeadEnd`].
-            #[must_use]
-            pub fn into_inner(self) -> DeadEnd {
-                self.0
-            }
-
-            /// Wraps a [`DeadEnd`].
-            #[must_use]
-            pub fn from_inner(value: DeadEnd) -> Self {
-                Self(value)
-            }
-
-            /// See [`DeadEnd::with_options`].
-            #[must_use]
-            pub fn with_options(options: impl IntoIterator<Item = impl Into<Self>>) -> Self {
-                Self(DeadEnd::with_options(options.into_iter().map(Into::into)))
-            }
-
-            /// See [`DeadEnd::with_options_unchecked`].
-            #[must_use]
-            pub fn with_options_unchecked(
-                options: impl IntoIterator<Item = impl Into<Self>>,
-            ) -> Self {
-                Self(DeadEnd::with_options_unchecked(
-                    options.into_iter().map(Into::into),
-                ))
-            }
-
-            /// See [`DeadEnd::options`].
-            #[must_use]
-            pub fn options(&self) -> &[Self] {
-                Self::slice_from_inner(self.0.options())
-            }
-
-            /// See [`DeadEnd::options_iter`].
-            pub fn options_iter(&self) -> std::slice::Iter<'_, Self> {
-                self.options().iter()
-            }
-
-            /// See [`DeadEnd::isomorphic`].
-            #[must_use]
-            pub fn isomorphic(&self, other: &Self) -> bool {
-                self.0.isomorphic(&other.0)
-            }
-
-            /// See [`DeadEnd::integer`].
-            #[must_use]
-            pub fn integer(rank: usize) -> Self {
-                Self(DeadEnd::integer(rank))
-            }
-
-            /// See [`DeadEnd::waiting`].
-            #[must_use]
-            pub fn waiting(rank: usize) -> Self {
-                Self(DeadEnd::waiting(rank))
-            }
-
-            /// See [`DeadEnd::is_waiting`].
-            #[must_use]
-            pub fn is_waiting(&self) -> (usize, bool) {
-                self.0.is_waiting()
-            }
-
-            /// See [`DeadEnd::is_integer`].
-            #[must_use]
-            pub fn is_integer(&self) -> (usize, &Self, bool) {
-                let (a, b, c) = self.0.is_integer();
-                (a, Self::ref_cast(b), c)
-            }
-
-            /// See [`DeadEnd::flex`].
-            #[must_use]
-            pub fn flex(&self) -> usize {
-                self.0.flex()
-            }
-
-            /// See [`DeadEnd::birth`].
-            #[must_use]
-            pub fn birth(&self) -> usize {
-                self.0.birth()
-            }
-
-            /// See [`DeadEnd::race`].
-            #[must_use]
-            pub fn race(&self) -> usize {
-                self.0.race()
-            }
-
-            /// See [`DeadEnd::term_lengths`].
-            #[must_use]
-            pub fn term_lengths(&self) -> Vec<usize> {
-                self.0.term_lengths()
-            }
-
-            /// See [`DeadEnd::novel_factors`].
-            #[must_use]
-            pub fn novel_factors(&self) -> Vec<Self> {
-                self.0.novel_factors().into_iter().map(Self).collect()
-            }
-
-            /// See [`DeadEnd::factors`].
-            #[must_use]
-            pub fn factors(&self) -> Vec<Self> {
-                self.0.factors().into_iter().map(Self).collect()
-            }
-
-            /// See [`DeadEnd::is_atom`].
-            #[must_use]
-            pub fn is_atom(&self) -> bool {
-                self.0.is_atom()
-            }
-
-            /// See [`DeadEnd::canonical`].
-            #[must_use]
-            pub fn canonical(&self) -> Self {
-                Self(self.0.canonical())
-            }
-
-            /// See [`DeadEnd::good_options`].
-            #[must_use]
-            pub fn good_options(&self) -> Vec<&Self> {
-                self.0
-                    .good_options()
-                    .into_iter()
-                    .map(Self::ref_cast)
-                    .collect()
-            }
-
-            /// See [`DeadEnd::unique_good_option`].
-            #[must_use]
-            pub fn unique_good_option(&self) -> Option<&Self> {
-                self.0.unique_good_option().map(Self::ref_cast)
-            }
-
-            /// See [`DeadEnd::bound_length`].
-            #[must_use]
-            pub fn bound_length(&self) -> usize {
-                self.0.bound_length()
-            }
-        }
-
-        impl From<$wrapper> for DeadEnd {
-            fn from(value: $wrapper) -> Self {
-                value.0
-            }
-        }
-
-        impl From<usize> for $wrapper {
-            fn from(value: usize) -> Self {
-                Self::integer(value)
-            }
-        }
-
-        impl<'a> From<&'a DeadEnd> for &'a $wrapper {
-            fn from(value: &'a DeadEnd) -> Self {
-                $wrapper::ref_cast(value)
-            }
-        }
-
-        impl<'a> From<&'a mut DeadEnd> for &'a mut $wrapper {
-            fn from(value: &'a mut DeadEnd) -> Self {
-                $wrapper::ref_cast_mut(value)
-            }
-        }
-
-        impl From<DeadEnd> for $wrapper {
-            fn from(value: DeadEnd) -> Self {
-                $wrapper(value)
-            }
-        }
-
-        impl<'a> From<&'a $wrapper> for &'a DeadEnd {
-            fn from(value: &'a $wrapper) -> Self {
-                &value.0
-            }
-        }
-
-        impl<'a> From<&'a mut $wrapper> for &'a mut DeadEnd {
-            fn from(value: &'a mut $wrapper) -> Self {
-                &mut value.0
-            }
-        }
-
-        impl Eq for $wrapper {}
-
-        impl PartialEq for $wrapper {
-            fn eq(&self, other: &Self) -> bool {
-                self >= other && other >= self
-            }
-        }
-
-        impl fmt::Display for $wrapper {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-
-        impl FromStr for $wrapper {
-            type Err = ParseDeadEndError;
-
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                DeadEnd::from_str(s).map(Self)
-            }
-        }
-
-        impl Add for &$wrapper {
-            type Output = $wrapper;
-
-            fn add(self, other: Self) -> Self::Output {
-                $wrapper(&self.0 + &other.0)
-            }
-        }
-
-        impl<Rhs> Add<Rhs> for $wrapper
-        where
-            Rhs: Into<$wrapper>,
-        {
-            type Output = Self;
-
-            fn add(self, rhs: Rhs) -> Self::Output {
-                let rhs = rhs.into();
-                $wrapper(self.0 + rhs.0)
-            }
-        }
-    };
-}
-
-impl_handed_wrapper!(LeftDeadEnd);
-impl_handed_wrapper!(RightDeadEnd);
-
-macro_rules! impl_convert_handed {
-    ($from:ident => $to:ident) => {
-        impl From<$from> for $to {
-            fn from(value: $from) -> Self {
-                $to(value.0)
-            }
-        }
-
-        impl<'a> From<&'a $from> for &'a $to {
-            fn from(value: &'a $from) -> Self {
-                $to::ref_cast(value.as_inner())
-            }
-        }
-
-        impl<'a> From<&'a mut $from> for &'a mut $to {
-            fn from(value: &'a mut $from) -> Self {
-                $to::ref_cast_mut(value.as_inner_mut())
-            }
-        }
-    };
-}
-
-impl_convert_handed!(LeftDeadEnd => RightDeadEnd);
-impl_convert_handed!(RightDeadEnd => LeftDeadEnd);
-
-const SUBSCRIPT_DIGITS: [char; 10] = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
-
-fn subscript_digit_to_usize(ch: char) -> Option<usize> {
-    SUBSCRIPT_DIGITS.iter().position(|digit| *digit == ch)
-}
-
-fn usize_to_subscript(mut n: usize) -> String {
-    if n == 0 {
-        return SUBSCRIPT_DIGITS[0].to_string();
-    }
-
-    let mut digits = Vec::new();
-    while n > 0 {
-        digits.push(SUBSCRIPT_DIGITS[n % 10]);
-        n /= 10;
-    }
-
-    digits.iter().rev().collect()
-}
-
-fn subscript_to_usize(s: &str) -> Option<usize> {
-    if s.is_empty() {
-        return None;
-    }
-
-    let mut value = 0_usize;
-    for ch in s.chars() {
-        let digit = subscript_digit_to_usize(ch)?;
-        value = value.checked_mul(10)?.checked_add(digit)?;
-    }
-
-    Some(value)
-}
-
-fn dead_end_parser<'src>() -> impl Parser<'src, &'src str, DeadEnd, extra::Err<Rich<'src, char>>> {
-    recursive(|expr| {
-        let integer = any()
-            .filter(|ch: &char| ch.is_ascii_digit())
-            .repeated()
-            .at_least(1)
-            .collect::<String>()
-            .try_map(|digits, span| {
-                digits
-                    .parse::<usize>()
-                    .map(DeadEnd::integer)
-                    .map_err(|_| Rich::custom(span, "invalid integer rank"))
-            });
-
-        let subscript_digit = one_of(SUBSCRIPT_DIGITS);
-        let waiting = just('W')
-            .ignore_then(subscript_digit.repeated().at_least(1).collect::<String>())
-            .try_map(|subscript_digits, span| {
-                subscript_to_usize(&subscript_digits)
-                    .map(DeadEnd::waiting)
-                    .ok_or_else(|| {
-                        Rich::custom(span, "waiting games use subscript digits after 'W'")
-                    })
-            });
-
-        let braced = expr
-            .separated_by(just(',').padded())
-            .allow_trailing()
-            .collect::<Vec<_>>()
-            .delimited_by(just('{').padded(), just('}').padded())
-            .map(DeadEnd::with_options);
-
-        let term = choice((braced, waiting, integer)).padded();
-
-        term.clone().foldl(
-            just('+').padded().ignore_then(term).repeated(),
-            |left, right| left + right,
-        )
-    })
-    .then_ignore(end())
-}
-
-/// Error returned when parsing a [`DeadEnd`] from text fails.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ParseDeadEndError {
-    message: String,
-}
-
-impl ParseDeadEndError {
-    fn new(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
-    }
-}
-
-impl fmt::Display for ParseDeadEndError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.message)
-    }
-}
-
-impl std::error::Error for ParseDeadEndError {}
-
-impl FromStr for DeadEnd {
-    type Err = ParseDeadEndError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        dead_end_parser().parse(s).into_result().map_err(|errs| {
-            // Chumsky can emit multiple errors; use the first as the primary diagnostic.
-            let message = errs
-                .first()
-                .map(|err| err.to_string())
-                .unwrap_or_else(|| "invalid dead end syntax".to_string());
-            ParseDeadEndError::new(message)
-        })
-    }
-}
-
-/// Formats integers and canonical waiting games specially.
-impl fmt::Display for DeadEnd {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (a, b, c) = self.is_integer();
-        if c {
-            return write!(f, "{a}");
-        }
-        if a > 0 {
-            return write!(f, "{a}+{b}");
-        }
-
-        let (a, b) = self.is_waiting();
-        if b {
-            return write!(f, "W{}", usize_to_subscript(a));
-        }
-
-        let rep = self.options.iter().map(|g| format!("{g}")).join(",");
-        write!(f, "{{{rep}}}")
-    }
-}
-
-/// Formats integers specially.
-impl fmt::Debug for DeadEnd {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (a, b, c) = self.is_integer();
-        if c {
-            return write!(f, "{a}");
-        }
-        if a > 0 {
-            return write!(f, "{a}+{b:?}");
-        }
-
-        let rep = self.options.iter().map(|g| format!("{g:?}")).join(",");
-        write!(f, "{{{rep}}}")
-    }
-}
-
 impl Eq for DeadEnd {}
 
 impl PartialEq for DeadEnd {
@@ -1055,37 +599,14 @@ impl PartialOrd for DeadEnd {
     }
 
     fn ge(&self, other: &Self) -> bool {
-        if other.options.is_empty() {
-            return self.options.is_empty();
+        if other.options().is_empty() {
+            return self.options().is_empty();
         }
 
         other
-            .options
+            .options()
             .iter()
-            .all(|h| self.options.iter().any(|g| g >= h))
-    }
-}
-
-/// This order is reversed compared to [`DeadEnd`] and [`RightDeadEnd`].
-impl PartialOrd for LeftDeadEnd {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // NOTE: reversed order to [`DeadEnd`]
-        other.0.partial_cmp(&self.0)
-    }
-
-    fn ge(&self, other: &Self) -> bool {
-        // NOTE: reversed order to [`DeadEnd`]
-        other.0 >= self.0
-    }
-}
-
-impl PartialOrd for RightDeadEnd {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.0.partial_cmp(&other.0)
-    }
-
-    fn ge(&self, other: &Self) -> bool {
-        self.0 >= other.0
+            .all(|h| self.options().iter().any(|g| g >= h))
     }
 }
 
@@ -1093,19 +614,19 @@ impl Add for &DeadEnd {
     type Output = DeadEnd;
 
     fn add(self, other: Self) -> Self::Output {
-        if self.options.is_empty() {
+        if self.options().is_empty() {
             return other.clone();
         }
-        if other.options.is_empty() {
+        if other.options().is_empty() {
             return self.clone();
         }
 
-        let mut options = Vec::with_capacity(self.options.len() + other.options.len());
+        let mut options = Vec::with_capacity(self.options().len() + other.options().len());
 
-        for g in &self.options {
+        for g in self.options() {
             options.push(g + other);
         }
-        for h in &other.options {
+        for h in other.options() {
             options.push(self + h);
         }
 
@@ -1164,14 +685,6 @@ mod tests {
     }
 
     #[test]
-    fn add_integers_isomorphic() {
-        let g = DeadEnd::integer(1) + DeadEnd::integer(2);
-
-        assert!(g.isomorphic(&DeadEnd::integer(3)));
-        assert_eq!(g.options(), vec![DeadEnd::integer(2)]);
-    }
-
-    #[test]
     fn isomorphic_options() {
         let g = DeadEnd::with_options([
             DeadEnd::integer(1),
@@ -1191,73 +704,10 @@ mod tests {
     }
 
     #[test]
-    fn display_waiting_uses_subscripts() {
-        assert_eq!(DeadEnd::waiting(10).to_string(), "W₁₀");
-    }
+    fn add_integers_isomorphic() {
+        let g = DeadEnd::integer(1) + DeadEnd::integer(2);
 
-    #[test]
-    fn game_comparison() {
-        let g = LeftDeadEnd::integer(2);
-        let h = LeftDeadEnd::waiting(2);
-
-        assert!(g > h);
-
-        let g = RightDeadEnd::integer(2);
-        let h = RightDeadEnd::waiting(2);
-
-        assert!(h > g);
-    }
-
-    #[test]
-    fn parse_integer() {
-        assert_eq!(DeadEnd::from_str("97").unwrap(), DeadEnd::integer(97));
-    }
-
-    #[test]
-    fn parse_waiting_game() {
-        assert_eq!(DeadEnd::from_str("W₁₀").unwrap(), DeadEnd::waiting(10));
-    }
-
-    #[test]
-    fn parse_braced_recursive() {
-        let parsed = DeadEnd::from_str("{0,W₂,{1,W₃}}").unwrap();
-        let expected = DeadEnd::with_options([
-            DeadEnd::ZERO,
-            DeadEnd::waiting(2),
-            DeadEnd::with_options([DeadEnd::integer(1), DeadEnd::waiting(3)]),
-        ]);
-
-        assert_eq!(parsed, expected);
-    }
-
-    #[test]
-    fn parse_display_round_trip() {
-        let g = DeadEnd::integer(2) + DeadEnd::waiting(3);
-        assert_eq!(g.to_string().parse::<DeadEnd>().unwrap(), g);
-    }
-
-    #[test]
-    fn parse_general_sum() {
-        let parsed = DeadEnd::from_str("W₂+{0,W₁}+3").unwrap();
-        let expected =
-            DeadEnd::waiting(2) + DeadEnd::with_options([DeadEnd::ZERO, DeadEnd::waiting(1)]) + 3;
-
-        assert_eq!(parsed, expected);
-    }
-
-    #[test]
-    fn parse_sum_inside_braces() {
-        let parsed = DeadEnd::from_str("{0+W₂,1+{W₂,0}}").unwrap();
-        let expected = DeadEnd::with_options([
-            DeadEnd::ZERO + DeadEnd::waiting(2),
-            DeadEnd::integer(1) + DeadEnd::with_options([DeadEnd::waiting(2), DeadEnd::ZERO]),
-        ]);
-
-        assert_eq!(parsed, expected);
-    }
-
-    #[test]
-    fn parse_rejects_non_subscript_waiting_rank() {
-        assert!(DeadEnd::from_str("W10").is_err());
+        assert!(g.isomorphic(&DeadEnd::integer(3)));
+        assert_eq!(g.options(), vec![DeadEnd::integer(2)]);
     }
 }
