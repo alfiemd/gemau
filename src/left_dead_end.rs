@@ -653,13 +653,13 @@ impl Add for &LeftDeadEnd {
             return self.clone();
         }
 
-        let mut options = vec![];
+        let mut options = Vec::with_capacity(self.options.len() + other.options.len());
 
         for g in &self.options {
-            options.push(g.clone() + other.clone());
+            options.push(g + other);
         }
         for h in &other.options {
-            options.push(self.clone() + h.clone());
+            options.push(self + h);
         }
 
         LeftDeadEnd::from_options(options)
@@ -674,24 +674,7 @@ where
 
     fn add(self, rhs: Rhs) -> Self::Output {
         let other = rhs.into();
-
-        if self.options.is_empty() {
-            return other;
-        }
-        if other.options.is_empty() {
-            return self;
-        }
-
-        let mut options = vec![];
-
-        for g in &self.options {
-            options.push(g.clone() + other.clone());
-        }
-        for h in other.options {
-            options.push(self.clone() + h);
-        }
-
-        LeftDeadEnd::from_options(options)
+        &self + &other
     }
 }
 
