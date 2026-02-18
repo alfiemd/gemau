@@ -22,12 +22,13 @@ fn usize_to_subscript(mut n: usize) -> String {
 /// Formats integers and canonical waiting games specially.
 impl fmt::Display for DeadEnd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (a, b, c) = self.is_integer();
-        if c {
-            return write!(f, "{a}");
-        }
-        if a > 0 {
-            return write!(f, "{a}+{b}");
+        if let Some((a, b)) = self.integer_part() {
+            if b.options().is_empty() {
+                return write!(f, "{a}");
+            }
+            if a > 0 {
+                return write!(f, "{a}+{b}");
+            }
         }
 
         let (a, b) = self.is_waiting();
@@ -43,12 +44,8 @@ impl fmt::Display for DeadEnd {
 /// Formats integers specially.
 impl fmt::Debug for DeadEnd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (a, b, c) = self.is_integer();
-        if c {
+        if let Some(a) = self.is_integer() {
             return write!(f, "{a}");
-        }
-        if a > 0 {
-            return write!(f, "{a}+{b:?}");
         }
 
         let rep = self.options().iter().map(|g| format!("{g:?}")).join(",");

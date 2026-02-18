@@ -118,9 +118,14 @@ macro_rules! impl_handed_wrapper {
 
             /// See [`DeadEnd::is_integer`].
             #[must_use]
-            pub fn is_integer(&self) -> (usize, &Self, bool) {
-                let (a, b, c) = self.0.is_integer();
-                (a, Self::ref_cast(b), c)
+            pub fn is_integer(&self) -> Option<usize> {
+                self.0.is_integer()
+            }
+
+            /// See [`DeadEnd::integer_part`].
+            #[must_use]
+            pub fn integer_part(&self) -> Option<(usize, &Self)> {
+                self.0.integer_part().map(|(a, b)| (a, Self::ref_cast(b)))
             }
 
             /// See [`DeadEnd::flex`].

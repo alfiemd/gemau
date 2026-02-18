@@ -178,9 +178,10 @@ impl DeadEnd {
     /// If `is_waiting` is `true`, then `rank` is the rank of the waiting game.
     #[must_use]
     pub fn is_waiting(&self) -> (usize, bool) {
-        let (a, _, c) = self.is_integer();
-        if c && a <= 1 {
-            return (a, true);
+        if let Some(a) = self.is_integer() {
+            if a <= 1 {
+                return (a, true);
+            }
         }
 
         if self.options.len() != 2 {
@@ -203,47 +204,70 @@ impl DeadEnd {
         (0, false)
     }
 
-    /// Returns integer decomposition as `(rank, counterpart, is_integer)`.
+    /// Returns largest integer divisor as `(rank, counterpart)`.
+    ///
+    /// `rank` is the largest integer that fits into `self`, and `counterpart` is what remains
+    /// after removing that integer part.
     ///
     /// # Examples
     ///
     /// ```
     /// # use gemau::DeadEnd;
-    /// let g = DeadEnd::integer(3);
-    /// let h = DeadEnd::waiting(2);
-    /// let k = (&g + &h).canonical();
+    /// let g = DeadEnd::with_options(0..2);
     ///
-    /// let (a, b, c) = k.is_integer();
-    /// assert_eq!(a, 3);
-    /// assert_eq!(b, &h);
-    /// assert!(!c);
+    /// assert_eq!(g.integer_part(), None);
     /// ```
     ///
     /// ```
     /// # use gemau::DeadEnd;
     /// let g = DeadEnd::integer(7);
     ///
-    /// let (a, b, c) = g.is_integer();
+    /// let (a, b) = g.integer_part().unwrap();
     /// assert_eq!(a, 7);
     /// assert_eq!(b, &DeadEnd::ZERO);
-    /// assert!(c);
     /// ```
     #[must_use]
-    pub fn is_integer(&self) -> (usize, &Self, bool) {
+    pub fn integer_part(&self) -> Option<(usize, &Self)> {
         if self.options.is_empty() {
-            return (0, self, true);
+            return Some((0, self));
+        }
+
+        self.unique_good_option()?
+            .integer_part()
+            .map(|(a, b)| (a + 1, b))
+    }
+
+    /// Returns the rank if `self` is an integer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = DeadEnd::integer(4);
+    /// assert_eq!(g.is_integer(), Some(4));
+    /// ```
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = DeadEnd::waiting(2);
+    /// assert_eq!(g.is_integer(), None);
+    /// ```
+    #[must_use]
+    pub fn is_integer(&self) -> Option<usize> {
+        if self.options.is_empty() {
+            return Some(0);
         }
         if self.options.len() > 1 {
-            return (0, self, false);
+            return None;
         }
-        let (a, b, c) = self.options[0].is_integer();
-        (a + 1, b, c)
+
+        Some(self.options[0].is_integer()? + 1)
     }
 
     /// Returns the flexibility of the [`DeadEnd`].
     #[must_use]
     pub fn flex(&self) -> usize {
-        if self.is_integer().2 {
+        if self.is_integer().is_some() {
             return 0;
         }
 
