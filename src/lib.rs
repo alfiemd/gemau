@@ -14,22 +14,21 @@
 //!
 //! ```
 //! # use gemau::DeadEnd;
-//! let g = DeadEnd::waiting(4);
-//! let h = g + 2;
+//! let g = "W₄+2".parse::<DeadEnd>().unwrap();
 //!
-//! // factors are 0, 1, 2, W_4, 1 + W_4, 2 + W_4
-//! assert_eq!(h.factors().len(), 6);
+//! // factors are 0, 1, 2, W₄, 1 + W₄, 2 + W₄
+//! assert_eq!(g.factors().len(), 6);
 //!
-//! let k = DeadEnd::with_options(3..7);
-//! assert_eq!(k.flex(), 1);
-//! assert_eq!(k.race(), 4);
-//! assert_eq!(k.birth(), 7);
+//! let h = DeadEnd::with_options(3..7);
+//! assert_eq!(h.flex(), 1);
+//! assert_eq!(h.race(), 4);
+//! assert_eq!(h.birth(), 7);
 //!
 //! let j = DeadEnd::waiting(3);
-//! let k = k + j;
-//! assert_eq!(k.flex(), 9);
-//! assert_eq!(k.race(), 5);
-//! assert_eq!(k.birth(), 10);
+//! let h = h + j;
+//! assert_eq!(h.flex(), 9);
+//! assert_eq!(h.race(), 5);
+//! assert_eq!(h.birth(), 10);
 //! ```
 
 mod dead_end;
