@@ -305,31 +305,21 @@ impl DeadEnd {
     /// Returns the birthday of the [`DeadEnd`].
     #[must_use]
     pub fn birth(&self) -> usize {
-        if self.is_zero() {
-            return 0;
-        }
-
         self.options
             .iter()
             .map(Self::birth)
             .max()
-            .expect("birth called with non-empty options")
-            + 1
+            .map_or(0, |b| b + 1)
     }
 
     /// Returns the race of the [`DeadEnd`].
     #[must_use]
     pub fn race(&self) -> usize {
-        if self.is_zero() {
-            return 0;
-        }
-
         self.options
             .iter()
             .map(Self::race)
             .min()
-            .expect("race called with non-empty options")
-            + 1
+            .map_or(0, |r| r + 1)
     }
 
     /// Returns the terminal lengths of the [`DeadEnd`].
