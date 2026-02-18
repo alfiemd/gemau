@@ -588,7 +588,7 @@ impl DeadEnd {
     }
 
     fn is_dominant_option(&self, option: &Self) -> bool {
-        !self.options.iter().any(|g| g > option)
+        option.is_zero() || !self.options.iter().any(|g| g > option)
     }
 
     /// Returns an upper bound on the length of factorisations.
