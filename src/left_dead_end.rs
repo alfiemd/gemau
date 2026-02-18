@@ -613,34 +613,6 @@ impl fmt::Debug for LeftDeadEnd {
     }
 }
 
-/// The hash is **not** well-defined up to equivalence.
-///
-/// This hash should not be used where semantic equality is required.
-///
-/// # Example
-///
-/// ```
-/// # use gemau::LeftDeadEnd;
-/// # use std::hash::{Hash, DefaultHasher, Hasher};
-/// let g = LeftDeadEnd::waiting(2) + 1;
-/// let h = (LeftDeadEnd::waiting(2) + 1).canonical();
-///
-/// let mut hasher = DefaultHasher::new();
-/// g.hash(&mut hasher);
-/// let first_hash = hasher.finish();
-///
-/// let mut hasher = DefaultHasher::new();
-/// h.hash(&mut hasher);
-/// let second_hash = hasher.finish();
-///
-/// assert_ne!(first_hash, second_hash);
-/// ```
-impl std::hash::Hash for LeftDeadEnd {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        format!("{self:?}").hash(state);
-    }
-}
-
 impl Eq for LeftDeadEnd {}
 
 impl PartialEq for LeftDeadEnd {
