@@ -501,7 +501,7 @@ impl DeadEnd {
     pub fn canonical(&self) -> Self {
         let mut options = Vec::new();
         for x in &self.options {
-            if !self.options.iter().any(|y| y > x) && !options.contains(x) {
+            if self.is_dominant_option(x) && !options.contains(x) {
                 options.push(x.canonical());
             }
         }
@@ -527,7 +527,7 @@ impl DeadEnd {
     pub fn good_options(&self) -> Vec<&Self> {
         self.options
             .iter()
-            .filter(|&h| !self.options.iter().any(|k| k > h))
+            .filter(|&option| self.is_dominant_option(option))
             .collect()
     }
 
@@ -547,14 +547,25 @@ impl DeadEnd {
     /// assert_eq!(g.unique_good_option(), None);
     /// ```
     pub fn unique_good_option(&self) -> Option<&Self> {
-        let good_options = self.good_options();
-        let first = *good_options.first()?;
+        let mut first: Option<&Self> = None;
 
-        if good_options.iter().skip(1).all(|g| *g == first) {
-            return Some(first);
+        for option in &self.options {
+            if !self.is_dominant_option(option) {
+                continue;
+            }
+
+            match first {
+                None => first = Some(option),
+                Some(existing) if option == existing => {}
+                Some(_) => return None,
+            }
         }
 
-        None
+        first
+    }
+
+    fn is_dominant_option(&self, option: &Self) -> bool {
+        !self.options.iter().any(|g| g > option)
     }
 
     /// Returns an upper bound on the length of factorisations.
