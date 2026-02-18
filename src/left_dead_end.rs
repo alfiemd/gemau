@@ -876,6 +876,22 @@ macro_rules! impl_convert_handed {
 impl_convert_handed!(LeftDeadEnd => RightDeadEnd);
 impl_convert_handed!(RightDeadEnd => LeftDeadEnd);
 
+fn usize_to_subscript(mut n: usize) -> String {
+    const SUBSCRIPT_DIGITS: [char; 10] = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+
+    if n == 0 {
+        return SUBSCRIPT_DIGITS[0].to_string();
+    }
+
+    let mut digits = Vec::new();
+    while n > 0 {
+        digits.push(SUBSCRIPT_DIGITS[n % 10]);
+        n /= 10;
+    }
+
+    digits.iter().rev().collect()
+}
+
 /// Formats integers and canonical waiting games specially.
 impl fmt::Display for DeadEnd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -889,7 +905,7 @@ impl fmt::Display for DeadEnd {
 
         let (a, b) = self.is_waiting();
         if b {
-            return write!(f, "W_{a}");
+            return write!(f, "W{}", usize_to_subscript(a));
         }
 
         let rep = self.options.iter().map(|g| format!("{g}")).join(",");
@@ -1065,6 +1081,11 @@ mod tests {
 
         assert_eq!(g.options().len(), 2);
         assert!(g.options()[0].isomorphic(&g.options()[1]));
+    }
+
+    #[test]
+    fn display_waiting_uses_subscripts() {
+        assert_eq!(DeadEnd::waiting(10).to_string(), "W₁₀");
     }
 
     #[test]
