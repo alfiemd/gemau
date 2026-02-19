@@ -236,9 +236,10 @@ impl DeadEnd {
     ///
     /// ```
     /// # use gemau::DeadEnd;
-    /// let g = DeadEnd::with_options(0..2);
+    /// let g = "{{{0,{1,W₂}}}}".parse::<DeadEnd>().unwrap();
+    /// let rem = "{0,1+W₂}".parse::<DeadEnd>().unwrap();
     ///
-    /// assert_eq!(g.integer_part(), None);
+    /// assert_eq!(g.integer_part(), Some((2, &rem)));
     /// ```
     ///
     /// ```
@@ -255,9 +256,8 @@ impl DeadEnd {
             return Some((0, self));
         }
 
-        self.unique_good_option()?
-            .integer_part()
-            .map(|(a, b)| (a + 1, b))
+        self.unique_good_option()
+            .map(|g| g.integer_part().map_or((1, g), |(a, rem)| (a + 1, rem)))
     }
 
     /// Returns the rank if `self` is an integer.
