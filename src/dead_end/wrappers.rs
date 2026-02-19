@@ -158,6 +158,12 @@ macro_rules! impl_handed_wrapper {
                 self.0.term_lengths()
             }
 
+            /// See [`DeadEnd::vertex_count`].
+            #[must_use]
+            pub fn vertex_count(&self) -> usize {
+                self.0.vertex_count()
+            }
+
             /// See [`DeadEnd::novel_factors`].
             #[must_use]
             pub fn novel_factors(&self) -> Vec<Self> {

@@ -345,6 +345,26 @@ impl DeadEnd {
         lengths
     }
 
+    /// Returns the number of vertices in the associated game tree.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = DeadEnd::ZERO;
+    /// assert_eq!(g.vertex_count(), 1);
+    /// ```
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = DeadEnd::integer(4);
+    /// assert_eq!(g.vertex_count(), 5);
+    /// ```
+    #[must_use]
+    pub fn vertex_count(&self) -> usize {
+        1 + self.options_iter().map(Self::vertex_count).sum::<usize>()
+    }
+
     /// Returns the novel factors of the [`DeadEnd`].
     ///
     /// If a sum `g = h + k` is *novel*, then, without loss of generality, `h` appears in every
