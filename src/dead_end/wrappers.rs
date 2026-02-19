@@ -164,6 +164,12 @@ macro_rules! impl_handed_wrapper {
                 self.0.vertex_count()
             }
 
+            /// See [`DeadEnd::subposition_count`].
+            #[must_use]
+            pub fn subposition_count(&self) -> usize {
+                self.0.subposition_count()
+            }
+
             /// See [`DeadEnd::novel_factors`].
             #[must_use]
             pub fn novel_factors(&self) -> Vec<Self> {

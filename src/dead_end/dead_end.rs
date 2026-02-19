@@ -365,6 +365,43 @@ impl DeadEnd {
         1 + self.options_iter().map(Self::vertex_count).sum::<usize>()
     }
 
+    /// Returns the number of unique subpositions up to isomorphism.
+    ///
+    /// This count includes `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = DeadEnd::ZERO;
+    /// assert_eq!(g.subposition_count(), 1);
+    ///
+    /// let g = DeadEnd::integer(4);
+    /// assert_eq!(g.subposition_count(), 5);
+    /// ```
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = DeadEnd::waiting(4);
+    /// assert_eq!(g.subposition_count(), 5);
+    /// ```
+    #[must_use]
+    pub fn subposition_count(&self) -> usize {
+        let mut unique = Vec::new();
+        let mut stack = vec![self];
+
+        while let Some(pos) = stack.pop() {
+            if unique.iter().any(|seen: &&Self| seen.isomorphic(pos)) {
+                continue;
+            }
+
+            unique.push(pos);
+            stack.extend(pos.options_iter());
+        }
+
+        unique.len()
+    }
+
     /// Returns the novel factors of the [`DeadEnd`].
     ///
     /// If a sum `g = h + k` is *novel*, then, without loss of generality, `h` appears in every
