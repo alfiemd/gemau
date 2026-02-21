@@ -288,6 +288,15 @@ impl DeadEnd {
     }
 
     /// Returns the flexibility of the [`DeadEnd`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = "2+{1,W₄,6}".parse::<DeadEnd>().unwrap();
+    ///
+    /// assert_eq!(g.flex(), 6);
+    /// ```
     #[must_use]
     pub fn flex(&self) -> usize {
         if self.is_integer().is_some() {
@@ -303,6 +312,15 @@ impl DeadEnd {
     }
 
     /// Returns the birthday of the [`DeadEnd`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = "2+{1,W₄,6}".parse::<DeadEnd>().unwrap();
+    ///
+    /// assert_eq!(g.birth(), 9);
+    /// ```
     #[must_use]
     pub fn birth(&self) -> usize {
         self.options
@@ -313,6 +331,15 @@ impl DeadEnd {
     }
 
     /// Returns the race of the [`DeadEnd`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = "2+{1,W₄,6}".parse::<DeadEnd>().unwrap();
+    ///
+    /// assert_eq!(g.race(), 4);
+    /// ```
     #[must_use]
     pub fn race(&self) -> usize {
         self.options
@@ -324,8 +351,24 @@ impl DeadEnd {
 
     /// Returns the terminal lengths of the [`DeadEnd`].
     ///
-    /// Values are deduplicated but not sorted. Note that `min(self.term_lengths()) == self.race()`
-    /// and `max(self.term_lengths()) == self.birth()`.
+    /// Values are deduplicated but not sorted. Note that the maximum agrees with
+    /// [`DeadEnd::birth`], and the minimum with [`DeadEnd::race`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use gemau::DeadEnd;
+    /// let g = "{1,4}+W₂".parse::<DeadEnd>().unwrap();
+    ///
+    /// let birthday = g.birth();
+    /// let race = g.race();
+    /// let mut terminal_lengths = g.term_lengths();
+    /// terminal_lengths.sort_unstable();
+    ///
+    /// assert_eq!(terminal_lengths, vec![3,4,6,7]);
+    /// assert_eq!(*terminal_lengths.iter().max().unwrap(), birthday);
+    /// assert_eq!(*terminal_lengths.iter().min().unwrap(), race);
+    /// ```
     #[must_use]
     pub fn term_lengths(&self) -> Vec<usize> {
         if self.is_zero() {
@@ -774,6 +817,17 @@ mod tests {
         assert_eq!(DeadEnd::ZERO.flex(), 0);
         assert_eq!(DeadEnd::integer(3).flex(), 0);
         assert_eq!((DeadEnd::waiting(2) + DeadEnd::waiting(3)).flex(), 4);
+    }
+
+    #[test]
+    fn terminal_lengths() {
+        assert_eq!(DeadEnd::ZERO.term_lengths(), vec![0]);
+
+        let g = "1+W₂".parse::<DeadEnd>().unwrap();
+        let mut lengths = g.term_lengths();
+        lengths.sort_unstable();
+
+        assert_eq!(lengths, vec![2, 3]);
     }
 
     #[test]
