@@ -159,4 +159,58 @@ mod tests {
     fn parse_rejects_non_subscript_waiting_rank() {
         assert!(DeadEnd::from_str("W10").is_err());
     }
+
+    #[test]
+    fn parse_rejects_empty_input() {
+        assert!(DeadEnd::from_str("").is_err());
+    }
+
+    #[test]
+    fn parse_rejects_leading_option_comma() {
+        assert!(DeadEnd::from_str("{,0}").is_err());
+    }
+
+    #[test]
+    fn parse_accepts_trailing_option_comma() {
+        let parsed = DeadEnd::from_str("{0,}").unwrap();
+        let expected = DeadEnd::integer(1);
+
+        assert_eq!(parsed, expected);
+    }
+
+    #[test]
+    fn parse_rejects_unclosed_brace() {
+        assert!(DeadEnd::from_str("{0,W₂").is_err());
+    }
+
+    #[test]
+    fn parse_rejects_dangling_sum_operator() {
+        assert!(DeadEnd::from_str("W₂+").is_err());
+    }
+
+    #[test]
+    fn parse_rejects_leading_sum_operator() {
+        assert!(DeadEnd::from_str("+W₂").is_err());
+    }
+
+    #[test]
+    fn parse_reports_integer_rank_overflow() {
+        let err = DeadEnd::from_str(&"9".repeat(128)).unwrap_err().to_string();
+
+        assert!(
+            err.contains("invalid integer rank"),
+            "unexpected parse error: {err}"
+        );
+    }
+
+    #[test]
+    fn parse_reports_waiting_rank_overflow() {
+        let input = format!("W{}", "₉".repeat(128));
+        let err = DeadEnd::from_str(&input).unwrap_err().to_string();
+
+        assert!(
+            err.contains("waiting games use subscript digits after 'W'"),
+            "unexpected parse error: {err}"
+        );
+    }
 }
