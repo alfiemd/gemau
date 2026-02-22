@@ -210,9 +210,7 @@ impl DeadEnd {
                 continue;
             }
 
-            let Some(rank) = option.is_waiting() else {
-                return None;
-            };
+            let rank = option.is_waiting()?;
 
             match waiting_option {
                 None => waiting_option = Some((option, rank)),
