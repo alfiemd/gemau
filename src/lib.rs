@@ -31,6 +31,12 @@
 //! assert_eq!(h.birth(), 10);
 //! ```
 
+// Keep strict dependency hygiene with two exceptions for now.
+#[cfg(feature = "graff")]
+use graff as _;
+#[cfg(feature = "poset")]
+use poset as _;
+
 mod dead_end;
 
 pub use dead_end::*;
