@@ -138,7 +138,8 @@ mod tests {
     #[test]
     fn parse_general_sum() {
         let parsed = DeadEnd::from_str("W₂+{0,W₁}+3").unwrap();
-        let expected = DeadEnd::waiting(2) + DeadEnd::with_options([DeadEnd::ZERO, DeadEnd::waiting(1)]) + 3;
+        let expected =
+            DeadEnd::waiting(2) + DeadEnd::with_options([DeadEnd::ZERO, DeadEnd::waiting(1)]) + 3;
 
         assert_eq!(parsed, expected);
     }
