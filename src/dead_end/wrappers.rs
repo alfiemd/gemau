@@ -4,7 +4,7 @@ use std::fmt;
 use std::ops::Add;
 use std::str::FromStr;
 
-use super::dead_end::DeadEnd;
+use super::form::DeadEnd;
 use super::parse::ParseDeadEndError;
 
 /// Left dead end wrapper.

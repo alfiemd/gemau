@@ -1,8 +1,8 @@
-mod dead_end;
+mod form;
 mod fmt;
 mod parse;
 mod wrappers;
 
-pub use dead_end::DeadEnd;
+pub use form::DeadEnd;
 pub use parse::ParseDeadEndError;
 pub use wrappers::{LeftDeadEnd, RightDeadEnd};

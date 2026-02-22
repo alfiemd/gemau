@@ -2,7 +2,7 @@ use chumsky::prelude::*;
 use std::fmt;
 use std::str::FromStr;
 
-use super::dead_end::DeadEnd;
+use super::form::DeadEnd;
 
 const SUBSCRIPT_DIGITS: [char; 10] = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
 
