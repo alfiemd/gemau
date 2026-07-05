@@ -325,7 +325,7 @@ macro_rules! impl_augmented_wrapper {
                 );
 
                 // TODO: shouldn't clone g here
-                if left_t {
+                if g.left_tombstone() {
                     g.set_left_tomb(false);
                     if !$wrapper(g.clone()).left_strong() {
                         g.set_left_tomb(true);
@@ -333,7 +333,7 @@ macro_rules! impl_augmented_wrapper {
                 }
 
                 // TODO: shouldn't clone g here
-                if right_t {
+                if g.right_tombstone() {
                     g.set_right_tomb(false);
                     if !$wrapper(g.clone()).right_strong() {
                         g.set_right_tomb(true);
